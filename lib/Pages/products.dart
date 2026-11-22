@@ -7,6 +7,8 @@ import 'dart:async';
 
 import 'package:flutter_1/Models/products.dart';
 import 'package:flutter_1/Pages/stock.dart';
+import 'package:flutter_1/Pages/login.dart';
+import 'package:flutter_1/Services/auth.dart';
 
 void main() => runApp(const Produit());
 
@@ -35,6 +37,17 @@ class ProduitPage extends StatefulWidget {
 
 class _ProduitPageState extends State<ProduitPage> {
   late Future<List<Products>> futureProducts;
+
+  // Token missing or expired: clear it and send the user back to the login screen
+  void _checkSession(int statusCode) {
+    if (statusCode == 401 && mounted) {
+      AuthService.logout();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
+  }
   // TextEditingController nameController = TextEditingController();
   // TextEditingController priceController = TextEditingController();
   
@@ -42,7 +55,9 @@ class _ProduitPageState extends State<ProduitPage> {
     // final name = nameController.text;
     // final price = priceController.text;
 
-    final response = await http.get(Uri.parse('http://10.0.2.2:3000/products'));
+    final response = await http.get(Uri.parse('${AuthService.baseUrl}/products'),
+      headers: AuthService.headers());
+    _checkSession(response.statusCode);
 
     if (response.statusCode == 200) {
       List<dynamic> productsJson = jsonDecode(response.body);
@@ -54,10 +69,8 @@ class _ProduitPageState extends State<ProduitPage> {
   }
 
   Future<Products> deleteProducts(int id) async {
-    final response = await http.delete(Uri.parse('http://10.0.2.2:3000/products/delete/${id}'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+    final response = await http.delete(Uri.parse('${AuthService.baseUrl}/products/delete/${id}'),
+      headers: AuthService.headers(),
     );
 
     if (response.statusCode == 200) {
@@ -72,10 +85,8 @@ class _ProduitPageState extends State<ProduitPage> {
   }
 
   Future<Products> updateProducts(String name, double price, int id) async {
-    final response = await http.put(Uri.parse('http://10.0.2.2:3000/products/modifier/${id}'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+    final response = await http.put(Uri.parse('${AuthService.baseUrl}/products/modifier/${id}'),
+      headers: AuthService.headers(),
       body: jsonEncode({
         'name': name,
         'price': price,
@@ -95,10 +106,8 @@ class _ProduitPageState extends State<ProduitPage> {
 
   Future<Products> createProducts(String name, double price, int categories_id, String description, 
   String image, int quantity) async {
-    final response = await http.post(Uri.parse('http://10.0.2.2:3000/products/create'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
+    final response = await http.post(Uri.parse('${AuthService.baseUrl}/products/create'),
+      headers: AuthService.headers(),
       body: jsonEncode({
         'name': name,
         'price': price,
@@ -109,7 +118,7 @@ class _ProduitPageState extends State<ProduitPage> {
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
       return Products.fromJson(jsonDecode(response.body) as Map<String, dynamic>);

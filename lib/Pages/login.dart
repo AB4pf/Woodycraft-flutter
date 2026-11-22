@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:flutter_1/Pages/products.dart';
+import 'package:flutter_1/Services/auth.dart';
 
 void main() => runApp(const Login());
 
@@ -39,7 +40,7 @@ class _LoginPageState extends State<LoginPage> {
       final email = gmailController.text;
       final password = passwordController.text;
 
-      final response = await http.post( Uri.parse('http://10.0.2.2:3000/login'),
+      final response = await http.post(Uri.parse('${AuthService.baseUrl}/login'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -50,8 +51,10 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        // Connexion réussie, vous pouvez naviguer vers la page suivante
-        Navigator.push(
+        // Save the JWT so every product request can send it
+        AuthService.token = jsonDecode(response.body)['token'] as String;
+        if (!mounted) return;
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const ProduitPage()),
         );
@@ -133,6 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     TextFormField(
                       controller: passwordController,
+                      obscureText: true,
                       decoration: const InputDecoration(
                         label: Text(
                           'Password', 

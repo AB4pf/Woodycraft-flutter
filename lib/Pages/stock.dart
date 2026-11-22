@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter_1/Pages/products.dart';
+import 'package:flutter_1/Services/auth.dart';
 
 
 void main() => runApp(const Stock());
@@ -34,7 +35,8 @@ class _StockState extends State<Stock> {
   late Future<List<Products>> productsMin;
 
   Future<List<Products>> maxProducts() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:3000/products/stocks/haut'));
+    final response = await http.get(Uri.parse('${AuthService.baseUrl}/products/stocks/haut'),
+      headers: AuthService.headers());
 
     if (response.statusCode == 200) {
       List<dynamic> productsJson = jsonDecode(response.body);
@@ -46,7 +48,8 @@ class _StockState extends State<Stock> {
   }
 
   Future<List<Products>> minProducts() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:3000/products/stocks/bas'));
+    final response = await http.get(Uri.parse('${AuthService.baseUrl}/products/stocks/bas'),
+      headers: AuthService.headers());
 
     if (response.statusCode == 200) {
       List<dynamic> productsJson = jsonDecode(response.body);
